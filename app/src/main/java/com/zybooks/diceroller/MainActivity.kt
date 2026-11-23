@@ -1,8 +1,10 @@
 package com.zybooks.diceroller
 import android.os.Bundle
 import android.view.ContextMenu
+import android.view.GestureDetector
 import android.view.Menu
 import android.view.MenuItem
+import android.view.MotionEvent
 import android.view.View
 import android.widget.ImageView
 import androidx.activity.enableEdgeToEdge
@@ -17,6 +19,9 @@ class MainActivity : AppCompatActivity(),
     private var timerLength = 2000L
     private var timer: CountDownTimer? = null
     private var selectedDie = 0
+    private var initTouchX = 0
+    private var initTouchY = 0
+    private lateinit var gestureDetector: GestureDetector
     private lateinit var optionsMenu: Menu
     private var numVisibleDice = MAX_DICE
     private lateinit var diceList: MutableList<Dice>
@@ -45,12 +50,41 @@ class MainActivity : AppCompatActivity(),
         diceImageViewList = mutableListOf(
             findViewById(R.id.dice1), findViewById(R.id.dice2),
             findViewById(R.id.dice3))
-        // Register context menus for all dice and tag each die
+        // Tag each die
         for (i in 0 until diceImageViewList.size) {
-            registerForContextMenu(diceImageViewList[i])
             diceImageViewList[i].tag = i
         }
+        gestureDetector = GestureDetector(this,
+            object : GestureDetector.SimpleOnGestureListener() {
+                override fun onDown(e: MotionEvent): Boolean {
+                    return true
+                }
+
+                override fun onFling(
+                    e1: MotionEvent?,
+                    e2: MotionEvent,
+                    velocityX: Float,
+                    velocityY: Float
+                ): Boolean {
+                    if (velocityY > 0) {
+                        rollDice()
+                    }
+                    return true
+                }
+
+                override fun onDoubleTap(e: MotionEvent): Boolean {
+                    for (i in 0 until numVisibleDice) {
+                        diceList[i].number++
+                    }
+                    showDice()
+                    return true
+                }
+            })
         showDice()
+    }
+    override fun onTouchEvent(event: MotionEvent): Boolean {
+        gestureDetector.onTouchEvent(event)
+        return super.onTouchEvent(event)
     }
     override fun onCreateContextMenu(
         menu: ContextMenu?,
