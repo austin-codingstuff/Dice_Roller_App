@@ -1,5 +1,6 @@
 package com.zybooks.diceroller
 import android.os.Bundle
+import android.view.ContextMenu
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
@@ -15,6 +16,7 @@ class MainActivity : AppCompatActivity(),
     RollLengthDialogFragment.OnRollLengthSelectedListener {
     private var timerLength = 2000L
     private var timer: CountDownTimer? = null
+    private var selectedDie = 0
     private lateinit var optionsMenu: Menu
     private var numVisibleDice = MAX_DICE
     private lateinit var diceList: MutableList<Dice>
@@ -43,7 +45,41 @@ class MainActivity : AppCompatActivity(),
         diceImageViewList = mutableListOf(
             findViewById(R.id.dice1), findViewById(R.id.dice2),
             findViewById(R.id.dice3))
+        // Register context menus for all dice and tag each die
+        for (i in 0 until diceImageViewList.size) {
+            registerForContextMenu(diceImageViewList[i])
+            diceImageViewList[i].tag = i
+        }
         showDice()
+    }
+    override fun onCreateContextMenu(
+        menu: ContextMenu?,
+        v: View?,
+        menuInfo: ContextMenu.ContextMenuInfo?
+    ) {
+        super.onCreateContextMenu(menu, v, menuInfo)
+        // Save which die is selected
+        selectedDie = v?.tag as Int
+        menuInflater.inflate(R.menu.context_menu, menu)
+    }
+    override fun onContextItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.add_one -> {
+                diceList[selectedDie].number++
+                showDice()
+                true
+            }
+            R.id.subtract_one -> {
+                diceList[selectedDie].number--
+                showDice()
+                true
+            }
+            R.id.roll -> {
+                rollDice()
+                true
+            }
+            else -> super.onContextItemSelected(item)
+        }
     }
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.appbar_menu, menu)
